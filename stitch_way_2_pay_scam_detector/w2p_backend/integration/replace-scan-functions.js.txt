@@ -1,0 +1,103 @@
+Paste/merge these functions into the bottom script of the existing Stitch HTML.
+
+1) Add:
+<script src="./w2p-api.js"></script>
+
+2) Replace the old runSafetyScan function with:
+
+async function runSafetyScan(vector) {
+  try {
+    let response;
+
+    if (vector === "message") {
+      response = await scanMessageFromBackend(
+        document.getElementById("input-message")?.value || ""
+      );
+    } else if (vector === "url") {
+      response = await scanUrlFromBackend(
+        document.getElementById("input-url")?.value || ""
+      );
+    } else if (vector === "payment") {
+      response = await scanPaymentFromBackend(
+        document.getElementById("input-recipient")?.value || "",
+        document.getElementById("input-amount")?.value || "",
+        document.getElementById("input-purpose")?.value || "delivery"
+      );
+    } else if (vector === "qr") {
+      response = await scanQrFromBackend(
+        "upi://pay?pa=mule.transfers89@axis&am=350.00",
+        document.getElementById("qr-filename")?.textContent || "qr-upload"
+      );
+    }
+
+    console.log("W2P backend result:", response);
+    window.lastW2PScan = response.result;
+
+    // The original page already contains result cards.
+    // For a first integration, scroll to the result area.
+    document.getElementById("results-anchor")
+      ?.scrollIntoView({ behavior: "smooth" });
+
+    // Optional: show the returned result in the browser console.
+    alert(`${response.result.label}: ${response.result.score}/100`);
+  } catch (error) {
+    console.error(error);
+    alert(`W2P backend error: ${error.message}`);
+  }
+}
+
+3) Replace downloadIncidentReport with:
+
+async function downloadIncidentReport() {
+  if (!window.lastW2PScan) {
+    alert("Run a scan first.");
+    return;
+  }
+
+  try {
+    const response = await createIncidentReport(window.lastW2PScan);
+    const blob = new Blob(
+      [JSON.stringify(response.report, null, 2)],
+      { type: "application/json" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = response.downloadName;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    alert(`Report error: ${error.message}`);
+  }
+}
+
+4) Replace reportSignalToCommunity with:
+
+async function reportSignalToCommunity() {
+  if (!window.lastW2PScan) {
+    alert("Run a scan first.");
+    return;
+  }
+
+  try {
+    const response = await reportToW2PCommunity(window.lastW2PScan.id);
+    alert(response.message);
+  } catch (error) {
+    alert(`Community report error: ${error.message}`);
+  }
+}
+
+5) Replace clearLocalHistory with:
+
+async function clearLocalHistory() {
+  try {
+    await clearW2PHistory();
+    const tbody = document.getElementById("history-table-body");
+    if (tbody) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="py-8 text-center">History cleared. 0 records.</td></tr>';
+    }
+  } catch (error) {
+    alert(`Could not clear history: ${error.message}`);
+  }
+}

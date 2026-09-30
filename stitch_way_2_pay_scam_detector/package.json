@@ -1,0 +1,12 @@
+{
+  "name": "where-2-pay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Where 2 Pay scam detection platform with React frontend and Express backend",
+  "scripts": {
+    "install:all": "npm --prefix w2p_backend install && npm --prefix way2pay-frontend install",
+    "backend": "npm --prefix w2p_backend run dev",
+    "frontend": "npm --prefix way2pay-frontend run dev",
+    "backend:start": "npm --prefix w2p_backend start"
+  }
+}
